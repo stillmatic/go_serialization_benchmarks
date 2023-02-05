@@ -2,8 +2,11 @@ syntax = "proto2";
 package goserbench;
 option go_package = "./";
 
+import "github.com/planetscale/vtprotobuf/vtproto/ext.proto";
+//import "ext.proto";
 
-message Proto2ProtoBufA {
+message VTProtoBufA {
+  option (vtproto.mempool) = true;
   required string name = 1;
   required int64 birthDay = 2;
   required string phone = 3;

@@ -6,7 +6,7 @@ if [[ "${benchFuncs}0" == "0" ]] ;then {
 }
 fi
 
-cat results.txt |  awk -F' ' '
+cat > results.txt |  awk -F' ' '
 BEGIN {
 	print "benchmark                                     | iter       | time/iter    | bytes/op  | allocs/op  | tt.sec | tt.kb        | ns/alloc"
 	print "----------------------------------------------|------------|--------------|-----------|------------|--------|--------------|-----------"

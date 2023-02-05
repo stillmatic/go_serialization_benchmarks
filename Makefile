@@ -29,8 +29,8 @@ structdef.pb.go: structdef.proto
 structdef-proto2.pb.go: structdef-proto2.proto
 	protoc --go_out=. structdef-proto2.proto
 
-structdef-vtproto.pb.go: structdef-proto2.proto
-	protoc --go-vtproto_out=. structdef-proto2.proto
+structdef-vtproto.pb.go: structdef-vtproto.proto
+	protoc  --go_out=. --go-vtproto_out=. structdef-vtproto.proto --go-vtproto_opt=features=marshal+unmarshal+pool+size
 
 structdef.capnp2.go: structdef.capnp2
 	go get -u zombiezen.com/go/capnproto2/... # conflicts with go-capnproto

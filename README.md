@@ -32,6 +32,8 @@ This is a test suite for benchmarking various Go serialization methods.
 - [github.com/200sc/bebop](https://github.com/200sc/bebop) (generated code)
 - [github.com/shamaton/msgpackgen](https://github.com/shamaton/msgpackgen) (generated code)
 - [github.com/ymz-ncnk/musgo](https://github.com/ymz-ncnk/musgo) (generated code)
+- [google.golang.org/protobuf](https://pkg.go.dev/google.golang.org/protobuf) (generated code)
+- [github.com/planetscale/vtprotobuf](https://github.com/planetscale/vtprotobuf) (generated code, optimized version of `google.golang.org/protobuf`)
 
 ## Running the benchmarks
 

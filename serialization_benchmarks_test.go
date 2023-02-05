@@ -1833,8 +1833,72 @@ func Benchmark_Goprotobufv2_Unmarshal(b *testing.B) {
 }
 
 // https://github.com/planetscale/vtprotobuf
+func generateProtoVT() []*VTProtoBufA {
+	a := make([]*VTProtoBufA, 0, 1000)
+	for i := 0; i < 1000; i++ {
+		a = append(a, &VTProtoBufA{
+			Name:     proto2.String(randString(16)),
+			BirthDay: proto2.Int64(time.Now().UnixNano()),
+			Phone:    proto2.String(randString(10)),
+			Siblings: proto2.Int32(rand.Int31n(5)),
+			Spouse:   proto2.Bool(rand.Intn(2) == 1),
+			Money:    proto2.Float64(rand.Float64()),
+		})
+	}
+	return a
+}
+func Benchmark_vtprotoPool_Marshal(b *testing.B) {
+	data := generateProtoVT()
+	b.ReportAllocs()
+	b.ResetTimer()
+	var serialSize int
+	for i := 0; i < b.N; i++ {
+		bytes, err := data[rand.Intn(len(data))].MarshalVT()
+		if err != nil {
+			b.Fatal(err)
+		}
+		serialSize += len(bytes)
+	}
+	b.ReportMetric(float64(serialSize)/float64(b.N), "B/serial")
+}
+
+func Benchmark_vtprotoPool_Unmarshal(b *testing.B) {
+	b.StopTimer()
+	data := generateProtoVT()
+	ser := make([][]byte, len(data))
+	var serialSize int
+	for i, d := range data {
+		var err error
+		ser[i], err = d.MarshalVT()
+		if err != nil {
+			b.Fatal(err)
+		}
+		serialSize += len(ser[i])
+	}
+	b.ReportMetric(float64(serialSize)/float64(len(data)), "B/serial")
+	b.ReportAllocs()
+	b.StartTimer()
+	p := VTProtoBufAFromVTPool()
+	for i := 0; i < b.N; i++ {
+		n := rand.Intn(len(ser))
+		err := p.UnmarshalVT(ser[n])
+		if err != nil {
+			b.Fatalf("goprotobuf2 failed to unmarshal: %s (%s)", err, ser[n])
+		}
+		// Validate unmarshalled data.
+		if validate != "" {
+			i := data[n]
+			correct := *p.Name == *i.Name && *p.Phone == *i.Phone && *p.Siblings == *i.Siblings && *p.Spouse == *i.Spouse && *p.Money == *i.Money && *p.BirthDay == *i.BirthDay //&& cmpTags(o.Tags, i.Tags) && cmpAliases(o.Aliases, i.Aliases)
+			if !correct {
+				b.Fatalf("unmarshaled object differed:\n%v\n%v", i, p)
+			}
+		}
+		p.ReturnToVTPool()
+	}
+}
+
 func Benchmark_vtproto_Marshal(b *testing.B) {
-	data := generateProto2()
+	data := generateProtoVT()
 	b.ReportAllocs()
 	b.ResetTimer()
 	var serialSize int
@@ -1850,7 +1914,7 @@ func Benchmark_vtproto_Marshal(b *testing.B) {
 
 func Benchmark_vtproto_Unmarshal(b *testing.B) {
 	b.StopTimer()
-	data := generateProto2()
+	data := generateProtoVT()
 	ser := make([][]byte, len(data))
 	var serialSize int
 	for i, d := range data {
@@ -1864,20 +1928,19 @@ func Benchmark_vtproto_Unmarshal(b *testing.B) {
 	b.ReportMetric(float64(serialSize)/float64(len(data)), "B/serial")
 	b.ReportAllocs()
 	b.StartTimer()
-
 	for i := 0; i < b.N; i++ {
 		n := rand.Intn(len(ser))
-		o := &Proto2ProtoBufA{}
-		err := o.UnmarshalVT(ser[n])
+		p := &VTProtoBufA{}
+		err := p.UnmarshalVT(ser[n])
 		if err != nil {
 			b.Fatalf("goprotobuf2 failed to unmarshal: %s (%s)", err, ser[n])
 		}
 		// Validate unmarshalled data.
 		if validate != "" {
 			i := data[n]
-			correct := *o.Name == *i.Name && *o.Phone == *i.Phone && *o.Siblings == *i.Siblings && *o.Spouse == *i.Spouse && *o.Money == *i.Money && *o.BirthDay == *i.BirthDay //&& cmpTags(o.Tags, i.Tags) && cmpAliases(o.Aliases, i.Aliases)
+			correct := *p.Name == *i.Name && *p.Phone == *i.Phone && *p.Siblings == *i.Siblings && *p.Spouse == *i.Spouse && *p.Money == *i.Money && *p.BirthDay == *i.BirthDay //&& cmpTags(o.Tags, i.Tags) && cmpAliases(o.Aliases, i.Aliases)
 			if !correct {
-				b.Fatalf("unmarshaled object differed:\n%v\n%v", i, o)
+				b.Fatalf("unmarshaled object differed:\n%v\n%v", i, p)
 			}
 		}
 	}
