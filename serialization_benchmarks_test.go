@@ -1831,3 +1831,54 @@ func Benchmark_Goprotobufv2_Unmarshal(b *testing.B) {
 		}
 	}
 }
+
+// https://github.com/planetscale/vtprotobuf
+func Benchmark_vtproto_Marshal(b *testing.B) {
+	data := generateProto2()
+	b.ReportAllocs()
+	b.ResetTimer()
+	var serialSize int
+	for i := 0; i < b.N; i++ {
+		bytes, err := data[rand.Intn(len(data))].MarshalVT()
+		if err != nil {
+			b.Fatal(err)
+		}
+		serialSize += len(bytes)
+	}
+	b.ReportMetric(float64(serialSize)/float64(b.N), "B/serial")
+}
+
+func Benchmark_vtproto_Unmarshal(b *testing.B) {
+	b.StopTimer()
+	data := generateProto2()
+	ser := make([][]byte, len(data))
+	var serialSize int
+	for i, d := range data {
+		var err error
+		ser[i], err = d.MarshalVT()
+		if err != nil {
+			b.Fatal(err)
+		}
+		serialSize += len(ser[i])
+	}
+	b.ReportMetric(float64(serialSize)/float64(len(data)), "B/serial")
+	b.ReportAllocs()
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		n := rand.Intn(len(ser))
+		o := &Proto2ProtoBufA{}
+		err := o.UnmarshalVT(ser[n])
+		if err != nil {
+			b.Fatalf("goprotobuf2 failed to unmarshal: %s (%s)", err, ser[n])
+		}
+		// Validate unmarshalled data.
+		if validate != "" {
+			i := data[n]
+			correct := *o.Name == *i.Name && *o.Phone == *i.Phone && *o.Siblings == *i.Siblings && *o.Spouse == *i.Spouse && *o.Money == *i.Money && *o.BirthDay == *i.BirthDay //&& cmpTags(o.Tags, i.Tags) && cmpAliases(o.Aliases, i.Aliases)
+			if !correct {
+				b.Fatalf("unmarshaled object differed:\n%v\n%v", i, o)
+			}
+		}
+	}
+}

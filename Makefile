@@ -29,6 +29,9 @@ structdef.pb.go: structdef.proto
 structdef-proto2.pb.go: structdef-proto2.proto
 	protoc --go_out=. structdef-proto2.proto
 
+structdef-vtproto.pb.go: structdef-proto2.proto
+	protoc --go-vtproto_out=. structdef-proto2.proto
+
 structdef.capnp2.go: structdef.capnp2
 	go get -u zombiezen.com/go/capnproto2/... # conflicts with go-capnproto
 	capnp compile -I${GOPATH}/src -ogo structdef.capnp2
@@ -85,3 +88,6 @@ install:
 	go get -u github.com/200sc/bebop/main/bebopc-go
 	go get -u github.com/shamaton/msgpackgen
 	go get -u github.com/ymz-ncnk/musgo
+	go get -u github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@latest
+	go get -u google.golang.org/protobuf
+
