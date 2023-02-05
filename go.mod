@@ -10,7 +10,7 @@ require (
 	github.com/davecgh/go-xdr v0.0.0-20161123171359-e6a2ba005892
 	github.com/glycerine/go-capnproto v0.0.0-20190118050403-2d07de3aa7fc
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang/protobuf v1.3.2
+	github.com/golang/protobuf v1.5.0
 	github.com/google/flatbuffers v1.11.0
 	github.com/hprose/hprose-go v0.0.0-20161031134501-83de97da5004
 	github.com/hprose/hprose-golang v2.0.4+incompatible
@@ -57,6 +57,7 @@ require (
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	google.golang.org/appengine v1.6.5 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
