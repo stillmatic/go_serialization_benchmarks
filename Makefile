@@ -1,7 +1,7 @@
 # This is necessary due to the use of two conflicting generator commands for capnproto
 .NOTPARALLEL:
 
-all: Colfer.go FlatBufferA.go msgp_gen.go structdef-gogo.pb.go structdef.pb.go structdef.capnp.go structdef.capnp2.go gencode.schema.gen.go gencode-unsafe.schema.gen.go structdefxdr_generated.go structdef-bebop.go structdef_msgpackgen.go musgo.go
+all: Colfer.go FlatBufferA.go msgp_gen.go structdef-gogo.pb.go structdef.pb.go structdef-proto2.pb.go structdef.capnp.go structdef.capnp2.go gencode.schema.gen.go gencode-unsafe.schema.gen.go structdefxdr_generated.go structdef-bebop.go structdef_msgpackgen.go musgo.go
 
 Colfer.go:
 	go run github.com/pascaldekloe/colfer/cmd/colf go
@@ -25,6 +25,9 @@ structdef-gogo.pb.go: structdef-gogo.proto
 
 structdef.pb.go: structdef.proto
 	protoc --go_out=. structdef.proto
+
+structdef-proto2.pb.go: structdef-proto2.proto
+	protoc --go_out=. structdef-proto2.proto
 
 structdef.capnp2.go: structdef.capnp2
 	go get -u zombiezen.com/go/capnproto2/... # conflicts with go-capnproto
