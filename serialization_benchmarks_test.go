@@ -34,6 +34,7 @@ import (
 	vmihailenco "github.com/vmihailenco/msgpack/v4"
 	"go.dedis.ch/protobuf"
 	mongobson "go.mongodb.org/mongo-driver/bson"
+	proto2 "google.golang.org/protobuf/proto"
 	"gopkg.in/mgo.v2/bson"
 	capnp "zombiezen.com/go/capnproto2"
 )
@@ -1758,6 +1759,72 @@ func Benchmark_MusgoUnsafe_Unmarshal(b *testing.B) {
 		if validate != "" {
 			i := data[n]
 			correct := o.Name == i.Name && o.Phone == i.Phone && o.Siblings == i.Siblings && o.Spouse == i.Spouse && o.Money == i.Money && o.BirthDay == i.BirthDay //&& cmpTags(o.Tags, i.Tags) && cmpAliases(o.Aliases, i.Aliases)
+			if !correct {
+				b.Fatalf("unmarshaled object differed:\n%v\n%v", i, o)
+			}
+		}
+	}
+}
+
+// google.golang.org/protobuf
+func generateProto2() []*Proto2ProtoBufA {
+	a := make([]*Proto2ProtoBufA, 0, 1000)
+	for i := 0; i < 1000; i++ {
+		a = append(a, &Proto2ProtoBufA{
+			Name:     proto2.String(randString(16)),
+			BirthDay: proto2.Int64(time.Now().UnixNano()),
+			Phone:    proto2.String(randString(10)),
+			Siblings: proto2.Int32(rand.Int31n(5)),
+			Spouse:   proto2.Bool(rand.Intn(2) == 1),
+			Money:    proto2.Float64(rand.Float64()),
+		})
+	}
+	return a
+}
+
+func Benchmark_Goprotobufv2_Marshal(b *testing.B) {
+	data := generateProto2()
+	b.ReportAllocs()
+	b.ResetTimer()
+	var serialSize int
+	for i := 0; i < b.N; i++ {
+		bytes, err := proto2.Marshal(data[rand.Intn(len(data))])
+		if err != nil {
+			b.Fatal(err)
+		}
+		serialSize += len(bytes)
+	}
+	b.ReportMetric(float64(serialSize)/float64(b.N), "B/serial")
+}
+
+func Benchmark_Goprotobufv2_Unmarshal(b *testing.B) {
+	b.StopTimer()
+	data := generateProto2()
+	ser := make([][]byte, len(data))
+	var serialSize int
+	for i, d := range data {
+		var err error
+		ser[i], err = proto2.Marshal(d)
+		if err != nil {
+			b.Fatal(err)
+		}
+		serialSize += len(ser[i])
+	}
+	b.ReportMetric(float64(serialSize)/float64(len(data)), "B/serial")
+	b.ReportAllocs()
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		n := rand.Intn(len(ser))
+		o := &Proto2ProtoBufA{}
+		err := proto2.Unmarshal(ser[n], o)
+		if err != nil {
+			b.Fatalf("goprotobuf2 failed to unmarshal: %s (%s)", err, ser[n])
+		}
+		// Validate unmarshalled data.
+		if validate != "" {
+			i := data[n]
+			correct := *o.Name == *i.Name && *o.Phone == *i.Phone && *o.Siblings == *i.Siblings && *o.Spouse == *i.Spouse && *o.Money == *i.Money && *o.BirthDay == *i.BirthDay //&& cmpTags(o.Tags, i.Tags) && cmpAliases(o.Aliases, i.Aliases)
 			if !correct {
 				b.Fatalf("unmarshaled object differed:\n%v\n%v", i, o)
 			}
